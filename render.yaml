@@ -252,5 +252,4 @@ databases:
 
   - name: alr-redis
     plan: basic-1gb
-    maxmemoryPolicy: allkeys-lru
     ipAllowList: []
