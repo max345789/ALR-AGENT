@@ -10,6 +10,7 @@ import { registerPromptsRoutes } from './prompts.routes.js';
 import { registerCrmRoutes } from './crm.routes.js';
 import { registerAuthRoutes } from './auth.routes.js';
 import { registerBillingRoutes } from './billing.routes.js';
+import { registerCronRoutes } from './cron.routes.js';
 
 export async function registerRoutes(app: FastifyInstance, services: AgentServices) {
   await registerHealthRoutes(app);
@@ -21,4 +22,5 @@ export async function registerRoutes(app: FastifyInstance, services: AgentServic
   await registerCrmRoutes(app, services);
   await registerAuthRoutes(app, services);
   await registerBillingRoutes(app, services);
+  await registerCronRoutes(app, services);
 }

@@ -87,6 +87,22 @@ function matchesLead(record: LeadRecord, options?: LeadListOptions): boolean {
   return true;
 }
 
+function isDueFollowUp(record: LeadRecord, before: Date, ownerUserId?: string | null): boolean {
+  if (!record.nextFollowUpAt) {
+    return false;
+  }
+  if (record.nextFollowUpAt > before) {
+    return false;
+  }
+  if (['booked', 'won', 'lost', 'disqualified'].includes(record.status)) {
+    return false;
+  }
+  if (ownerUserId !== undefined) {
+    return ownerUserId === null ? record.ownerUserId === null : record.ownerUserId === ownerUserId;
+  }
+  return true;
+}
+
 class InMemoryLeadStore implements LeadStore {
   constructor(private readonly state: MemoryState) {}
 
@@ -157,6 +173,12 @@ class InMemoryLeadStore implements LeadStore {
   async list(options?: LeadListOptions): Promise<LeadRecord[]> {
     const limit = options?.limit ?? 100;
     return clone(this.state.leads.filter((lead) => matchesLead(lead, options)).slice(0, limit));
+  }
+
+  async findDueFollowUps(before: Date, ownerUserId?: string | null, limit = 100): Promise<LeadRecord[]> {
+    return clone(
+      this.state.leads.filter((lead) => isDueFollowUp(lead, before, ownerUserId)).slice(0, limit)
+    );
   }
 
   async update(id: string, input: StoreLeadUpdateInput): Promise<LeadRecord> {

@@ -133,6 +133,21 @@ export class PrismaStore implements AgentStore {
       });
       return leads.map((lead) => this.mapLead(lead));
     },
+    findDueFollowUps: async (before: Date, ownerUserId?: string | null, limit = 100): Promise<LeadRecord[]> => {
+      const where: Prisma.LeadWhereInput = {
+        nextFollowUpAt: { lte: before },
+        status: { notIn: ['booked', 'won', 'lost', 'disqualified'] }
+      };
+      if (ownerUserId !== undefined) {
+        where.ownerUserId = ownerUserId;
+      }
+      const leads = await this.prisma.lead.findMany({
+        where,
+        orderBy: { nextFollowUpAt: 'asc' },
+        take: limit
+      });
+      return leads.map((lead) => this.mapLead(lead));
+    },
     update: async (id: string, input: StoreLeadUpdateInput): Promise<LeadRecord> => {
       const data: Prisma.LeadUncheckedUpdateInput = {};
       if ('ownerUserId' in input) data.ownerUserId = input.ownerUserId ?? null;

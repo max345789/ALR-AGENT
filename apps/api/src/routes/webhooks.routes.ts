@@ -46,6 +46,14 @@ export async function registerWebhookRoutes(app: FastifyInstance, services: Agen
     }
 
     const lead = await services.leadService.captureLead(parsed.data, ownerUserId !== undefined ? { ownerUserId } : {});
+    if (env.SERVERLESS_MODE || !env.REDIS_URL) {
+      const qualified = await services.qualificationService.qualifyLead(lead.id, ownerUserId);
+      reply.code(201);
+      return {
+        lead: qualified.lead,
+        accepted: true
+      };
+    }
     reply.code(201);
     return {
       lead,

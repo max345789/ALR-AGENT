@@ -60,6 +60,8 @@ const schema = z.object({
   BOOKING_SLOT_MINUTES: z.coerce.number().default(30),
   BOOKING_WINDOW_DAYS: z.coerce.number().default(14),
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(100).default(10),
+  SERVERLESS_MODE: z.string().transform((value) => value === 'true').default('false'),
+  CRON_SECRET: z.string().optional(),
 
   // Billing / SaaS
   STRIPE_SECRET_KEY: z.string().optional(),

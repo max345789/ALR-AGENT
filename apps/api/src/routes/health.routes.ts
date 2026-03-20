@@ -16,6 +16,7 @@ export async function registerHealthRoutes(app: FastifyInstance) {
       nodeEnv: env.NODE_ENV,
       database: runtimeMode.usesDatabase ? 'postgresql' : 'memory',
       redis: runtimeMode.usesRedis ? 'redis' : 'in-memory',
+      serverlessMode: env.SERVERLESS_MODE,
       llmProvider: env.LLM_PROVIDER,
       emailProvider: env.EMAIL_PROVIDER,
       calendarProvider: env.CALENDAR_PROVIDER

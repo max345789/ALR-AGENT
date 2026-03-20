@@ -29,6 +29,7 @@ export interface LeadStore {
   findById(id: string, ownerUserId?: string | null): Promise<LeadRecord | null>;
   findByEmail(email: string, ownerUserId?: string | null): Promise<LeadRecord | null>;
   list(options?: LeadListOptions): Promise<LeadRecord[]>;
+  findDueFollowUps(before: Date, ownerUserId?: string | null, limit?: number): Promise<LeadRecord[]>;
   update(id: string, input: StoreLeadUpdateInput): Promise<LeadRecord>;
   addActivity(leadId: string, activity: Omit<LeadActivityRecord, 'id' | 'leadId' | 'createdAt'>): Promise<LeadActivityRecord>;
   listActivities(leadId: string): Promise<LeadActivityRecord[]>;

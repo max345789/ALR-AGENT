@@ -134,6 +134,10 @@ export class LeadService {
     return this.context.store.leads.list(filter);
   }
 
+  async listDueFollowUps(before = new Date(), ownerUserId?: string | null | undefined, limit = 100): Promise<LeadRecord[]> {
+    return this.context.store.leads.findDueFollowUps(before, ownerUserId, limit);
+  }
+
   async getLead(id: string, ownerUserId?: string | null | undefined): Promise<LeadRecord> {
     const lead = await this.context.store.leads.findById(id, ownerUserId);
     if (!lead) {

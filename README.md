@@ -165,6 +165,10 @@ The project runs with safe defaults for local development, but the following var
 - `AUTO_PROMOTION`
 - `DEFAULT_SEQUENCE_NAME`
 - `DEFAULT_TIMEZONE`
+- `SERVERLESS_MODE`
+- `CRON_SECRET`
+- `SERVERLESS_MODE`
+- `CRON_SECRET`
 
 `ADMIN_API_KEYS` accepts a comma-separated list, which lets you rotate admin keys without breaking existing clients. `ADMIN_API_KEY` remains as a legacy fallback for local compatibility, but production deployments should prefer `ADMIN_API_KEYS`.
 
@@ -294,6 +298,17 @@ For a saleable MVP, keep the first launch simple:
 - 14-day free trial
 - payment provider added after launch
 - no WhatsApp until after launch unless you already need it
+
+### Google Cloud
+
+If you want a Google-hosted deployment that wakes up only when users or scheduled jobs hit it, use the Cloud Run mode documented in [docs/google-cloud.md](docs/google-cloud.md).
+
+- `web` and `api` run on Cloud Run
+- PostgreSQL runs on Cloud SQL
+- Cloud Scheduler triggers `/api/v1/internal/cron/followups`
+- `SERVERLESS_MODE=true` enables immediate qualification without an always-on worker
+- `REDIS_URL` can stay empty in this mode
+- OpenAI remains the LLM provider
 
 ## Connecting a Real LLM
 
