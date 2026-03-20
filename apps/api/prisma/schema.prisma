@@ -1,0 +1,305 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id              String    @id @default(uuid())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  ownerUserId     String?
+  externalId      String?   @unique
+  source          String    @default("web")
+  status          String    @default("new")
+  segment         String    @default("cold")
+  score           Int       @default(0)
+  firstName       String?
+  lastName        String?
+  email           String?
+  phone           String?
+  company         String?
+  jobTitle        String?
+  message         String?
+  intentHint      String?
+  intent          String?
+  summary         String?
+  tags            Json      @default("[]")
+  metadata        Json      @default("{}")
+  ownerName       String?
+  notes           String?
+  qualifiedAt     DateTime?
+  bookedAt        DateTime?
+  convertedAt     DateTime?
+  nextFollowUpAt  DateTime?
+
+  activities       LeadActivity[]
+  followUpRuns     FollowUpRun[]
+  messages         Message[]
+  bookings         Booking[]
+  analyticsEvents  AnalyticsEvent[]
+  promptExecutions PromptExecution[]
+
+  owner User? @relation("UserLeads", fields: [ownerUserId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId])
+  @@index([ownerUserId, createdAt])
+  @@index([status])
+  @@index([segment])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model LeadActivity {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  leadId    String
+  type      String
+  channel   String?
+  title     String
+  body      String
+  metadata  Json     @default("{}")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([createdAt])
+}
+
+model User {
+  id             String   @id @default(uuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  email          String   @unique
+  name           String?
+  passwordHash   String?
+  googleSub      String?  @unique
+  avatarUrl      String?
+  emailVerifiedAt DateTime?
+  lastLoginAt    DateTime?
+  plan           BillingPlan   @default(trial)
+  billingStatus  BillingStatus @default(trialing)
+  trialEndsAt    DateTime?
+  leadLimit      Int           @default(250)
+  billingCustomerId String?    @unique
+  billingSubscriptionId String? @unique
+  billingPriceId String?
+  captureKeyHash String?       @unique
+  captureKeyLast4 String?
+  captureKeyIssuedAt DateTime?
+
+  leads           Lead[] @relation("UserLeads")
+  sessions        UserSession[]
+  passwordResets  PasswordResetToken[]
+}
+
+model UserSession {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  tokenHash   String   @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  lastSeenAt  DateTime?
+  ipAddress   String?
+  userAgent   String?
+  authProvider String  @default("email")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  requestIp  String?
+  userAgent  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PromptVersion {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  slug      String
+  version   Int
+  title     String
+  content   String
+  active    Boolean  @default(false)
+  checksum  String?
+  metadata  Json     @default("{}")
+
+  executions PromptExecution[]
+
+  @@unique([slug, version])
+  @@index([slug, active])
+}
+
+model PromptExecution {
+  id              String   @id @default(uuid())
+  createdAt       DateTime @default(now())
+  leadId          String?
+  promptVersionId String?
+  slug            String
+  provider        String
+  model           String?
+  input           Json
+  output          Json?
+  tokensIn        Int?
+  tokensOut       Int?
+  success         Boolean  @default(true)
+  error           String?
+
+  lead          Lead?          @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  promptVersion PromptVersion? @relation(fields: [promptVersionId], references: [id], onDelete: SetNull)
+
+  @@index([leadId])
+  @@index([slug])
+  @@index([createdAt])
+}
+
+model FollowUpRun {
+  id              String    @id @default(uuid())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  leadId          String
+  sequenceSlug    String
+  sequenceVersion Int?
+  status          String    @default("active")
+  currentStep     Int       @default(0)
+  attemptCount    Int       @default(0)
+  context         Json      @default("{}")
+  nextRunAt       DateTime?
+  lastRunAt       DateTime?
+
+  lead     Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([leadId])
+  @@index([status])
+  @@index([nextRunAt])
+}
+
+model Message {
+  id            String    @id @default(uuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  leadId        String
+  followUpRunId String?
+  channel       String
+  direction     String    @default("outbound")
+  status        String    @default("sent")
+  subject       String?
+  body          String
+  provider      String
+  externalId    String?
+  attempt       Int       @default(0)
+  scheduledFor  DateTime?
+  sentAt        DateTime?
+  error         String?
+  metadata      Json      @default("{}")
+
+  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  followUpRun FollowUpRun? @relation(fields: [followUpRunId], references: [id], onDelete: SetNull)
+
+  @@index([leadId])
+  @@index([status])
+}
+
+model Booking {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  leadId       String
+  bookingToken String   @unique
+  slotStart    DateTime
+  slotEnd      DateTime
+  timezone     String
+  meetingLink  String
+  provider     String   @default("local")
+  status       String   @default("confirmed")
+  notes        String?
+  externalId   String?
+  metadata     Json     @default("{}")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([slotStart])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  leadId    String?
+  type      String
+  value     Float    @default(0)
+  metadata  Json     @default("{}")
+
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([leadId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model DailyReport {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  reportDate DateTime @unique
+  payload    Json
+
+  @@index([reportDate])
+}
+
+model LearningMemory {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  key       String
+  value     Json
+  score     Float    @default(0)
+  source    String
+
+  @@index([key])
+}
+
+model FollowUpSequence {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  slug        String   @unique
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  stepsJson   Json     @default("[]")
+}
+
+enum BillingPlan {
+  trial
+  starter
+  pro
+  enterprise
+}
+
+enum BillingStatus {
+  trialing
+  active
+  past_due
+  paused
+  canceled
+}

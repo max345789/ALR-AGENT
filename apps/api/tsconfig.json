@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "paths": {}
+  },
+  "include": [
+    "src/bootstrap/app.ts",
+    "src/bootstrap/container.ts",
+    "src/bootstrap/index.ts",
+    "src/bootstrap/server.ts",
+    "src/bootstrap/worker.ts",
+    "src/config/env.ts",
+    "src/core/**/*.ts",
+    "src/modules/analytics/analytics.service.ts",
+    "src/modules/bookings/booking.service.ts",
+    "src/modules/crm/crm.service.ts",
+    "src/modules/followups/followup.service.ts",
+    "src/modules/leads/lead.service.ts",
+    "src/modules/optimization/optimization.service.ts",
+    "src/modules/prompts/prompt.service.ts",
+    "src/routes/analytics.routes.ts",
+    "src/routes/bookings.routes.ts",
+    "src/routes/crm.routes.ts",
+    "src/routes/health.routes.ts",
+    "src/routes/index.ts",
+    "src/routes/leads.routes.ts",
+    "src/routes/prompts.routes.ts",
+    "src/routes/webhooks.routes.ts",
+    "src/utils/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "src/app.ts", "src/server.ts", "src/worker.ts"]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "autonomous-lead-to-revenue-agent",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n shared,api,web -c yellow,cyan,magenta \"npm run dev --workspace @alr/shared\" \"npm run dev --workspace @alr/api\" \"npm run dev --workspace @alr/web\"",
+    "build": "npm run build --workspace @alr/shared && npm run build --workspace @alr/api && npm run build --workspace @alr/web",
+    "test": "npm run build --workspace @alr/shared && npm run test --workspace @alr/api",
+    "lint": "npm run build --workspace @alr/shared && npm run typecheck --workspace @alr/api && npm run typecheck --workspace @alr/web",
+    "migrate:deploy": "npm run prisma:migrate:deploy --workspace @alr/api",
+    "db:generate": "npm run prisma:generate --workspace @alr/api",
+    "db:studio": "npm run prisma:studio --workspace @alr/api",
+    "clean": "rm -rf apps/api/dist apps/web/.next packages/shared/dist"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-arm64-gnu": "4.59.0",
+    "@rollup/rollup-linux-x64-gnu": "4.59.0"
+  }
+}

@@ -1,0 +1,256 @@
+services:
+  - type: web
+    name: alr-web
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./apps/web/Dockerfile
+    plan: standard
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: /api/v1
+      - key: API_PROXY_TARGET
+        fromService:
+          name: alr-api
+          type: web
+          property: host
+      - key: ADMIN_API_KEYS
+        sync: false
+      - key: ADMIN_API_KEY
+        sync: false
+
+  - type: web
+    name: alr-api
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./apps/api/Dockerfile
+    plan: standard
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: alr-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromDatabase:
+          name: alr-redis
+          property: connectionString
+      - key: CORS_ORIGIN
+        fromService:
+          name: alr-web
+          type: web
+          property: host
+      - key: APP_URL
+        fromService:
+          name: alr-web
+          type: web
+          property: host
+      - key: PUBLIC_APP_URL
+        fromService:
+          name: alr-web
+          type: web
+          property: host
+      - key: WORKER_CONCURRENCY
+        value: 10
+      - key: AUTO_PROMOTION
+        value: "true"
+      - key: DEFAULT_SEQUENCE_NAME
+        value: default-outreach
+      - key: DEFAULT_TIMEZONE
+        value: Asia/Kolkata
+      - key: WORKSPACE_TRIAL_DAYS
+        value: 14
+      - key: CAPTURE_KEY_PREFIX
+        value: cap
+      - key: LLM_PROVIDER
+        value: openai
+      - key: LLM_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_BASE_URL
+        value: https://api.openai.com/v1
+      - key: EMAIL_PROVIDER
+        value: smtp
+      - key: EMAIL_WEBHOOK_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: WHATSAPP_PROVIDER
+        value: stub
+      - key: WHATSAPP_API_URL
+        sync: false
+      - key: WHATSAPP_API_TOKEN
+        sync: false
+      - key: CALENDAR_PROVIDER
+        value: local
+      - key: CALENDAR_PUBLIC_URL
+        sync: false
+      - key: CALENDAR_WEBHOOK_URL
+        sync: false
+      - key: CALENDAR_TIMEZONE
+        value: Asia/Kolkata
+      - key: BOOKING_SLOT_MINUTES
+        value: 30
+      - key: BOOKING_WINDOW_DAYS
+        value: 14
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_STARTER
+        sync: false
+      - key: STRIPE_PRICE_PRO
+        sync: false
+      - key: STRIPE_PRICE_ENTERPRISE
+        sync: false
+      - key: STRIPE_PORTAL_RETURN_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: ADMIN_API_KEYS
+        sync: false
+      - key: ADMIN_API_KEY
+        sync: false
+
+  - type: worker
+    name: alr-worker
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./apps/api/Dockerfile
+    plan: standard
+    branch: main
+    autoDeploy: true
+    startCommand: sh -c "npm run prisma:migrate:deploy --workspace @alr/api && npm run start:worker --workspace @alr/api"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: alr-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromDatabase:
+          name: alr-redis
+          property: connectionString
+      - key: APP_URL
+        fromService:
+          name: alr-web
+          type: web
+          property: host
+      - key: PUBLIC_APP_URL
+        fromService:
+          name: alr-web
+          type: web
+          property: host
+      - key: WORKER_CONCURRENCY
+        value: 10
+      - key: AUTO_PROMOTION
+        value: "true"
+      - key: DEFAULT_SEQUENCE_NAME
+        value: default-outreach
+      - key: DEFAULT_TIMEZONE
+        value: Asia/Kolkata
+      - key: WORKSPACE_TRIAL_DAYS
+        value: 14
+      - key: CAPTURE_KEY_PREFIX
+        value: cap
+      - key: LLM_PROVIDER
+        value: openai
+      - key: LLM_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_BASE_URL
+        value: https://api.openai.com/v1
+      - key: EMAIL_PROVIDER
+        value: smtp
+      - key: EMAIL_WEBHOOK_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: WHATSAPP_PROVIDER
+        value: stub
+      - key: WHATSAPP_API_URL
+        sync: false
+      - key: WHATSAPP_API_TOKEN
+        sync: false
+      - key: CALENDAR_PROVIDER
+        value: local
+      - key: CALENDAR_PUBLIC_URL
+        sync: false
+      - key: CALENDAR_WEBHOOK_URL
+        sync: false
+      - key: CALENDAR_TIMEZONE
+        value: Asia/Kolkata
+      - key: BOOKING_SLOT_MINUTES
+        value: 30
+      - key: BOOKING_WINDOW_DAYS
+        value: 14
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_STARTER
+        sync: false
+      - key: STRIPE_PRICE_PRO
+        sync: false
+      - key: STRIPE_PRICE_ENTERPRISE
+        sync: false
+      - key: STRIPE_PORTAL_RETURN_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: ADMIN_API_KEYS
+        sync: false
+      - key: ADMIN_API_KEY
+        sync: false
+
+databases:
+  - name: alr-postgres
+    databaseName: autonomous_leads
+    user: autonomous_leads
+    plan: pro-4gb
+    postgresMajorVersion: "16"
+    ipAllowList: []
+
+  - name: alr-redis
+    plan: basic-1gb
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []

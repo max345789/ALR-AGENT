@@ -1,0 +1,189 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: autonomous_leads
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d autonomous_leads"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/autonomous_leads?schema=public}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      ADMIN_API_KEYS: ${ADMIN_API_KEYS:-}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      LLM_MODEL: ${LLM_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-https://api.anthropic.com}
+      LOCAL_LLM_BASE_URL: ${LOCAL_LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+      EMAIL_WEBHOOK_URL: ${EMAIL_WEBHOOK_URL:-}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-lead-agent@example.com}
+      WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-stub}
+      WHATSAPP_API_URL: ${WHATSAPP_API_URL:-}
+      WHATSAPP_API_TOKEN: ${WHATSAPP_API_TOKEN:-}
+      CALENDAR_PROVIDER: ${CALENDAR_PROVIDER:-local}
+      CALENDAR_PUBLIC_URL: ${CALENDAR_PUBLIC_URL:-http://localhost:3000}
+      CALENDAR_WEBHOOK_URL: ${CALENDAR_WEBHOOK_URL:-}
+      CALENDAR_TIMEZONE: ${CALENDAR_TIMEZONE:-Asia/Kolkata}
+      BOOKING_SLOT_MINUTES: ${BOOKING_SLOT_MINUTES:-30}
+      BOOKING_WINDOW_DAYS: ${BOOKING_WINDOW_DAYS:-14}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-10}
+      AUTO_PROMOTION: ${AUTO_PROMOTION:-true}
+      DEFAULT_SEQUENCE_NAME: ${DEFAULT_SEQUENCE_NAME:-default-outreach}
+      DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-Asia/Kolkata}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost}
+      AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-alr_session}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+      AUTH_SESSION_TTL_DAYS: ${AUTH_SESSION_TTL_DAYS:-30}
+      AUTH_PASSWORD_RESET_TTL_MINUTES: ${AUTH_PASSWORD_RESET_TTL_MINUTES:-60}
+      AUTH_OAUTH_STATE_TTL_MINUTES: ${AUTH_OAUTH_STATE_TTL_MINUTES:-10}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost/api/v1/auth/google/callback}
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["sh", "-c", "npm run prisma:migrate:deploy --workspace @alr/api && npm run start --workspace @alr/api"]
+    ports:
+      - "4000:4000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/autonomous_leads?schema=public}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      ADMIN_API_KEYS: ${ADMIN_API_KEYS:-}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      LLM_MODEL: ${LLM_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-https://api.anthropic.com}
+      LOCAL_LLM_BASE_URL: ${LOCAL_LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+      EMAIL_WEBHOOK_URL: ${EMAIL_WEBHOOK_URL:-}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-lead-agent@example.com}
+      WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-stub}
+      WHATSAPP_API_URL: ${WHATSAPP_API_URL:-}
+      WHATSAPP_API_TOKEN: ${WHATSAPP_API_TOKEN:-}
+      CALENDAR_PROVIDER: ${CALENDAR_PROVIDER:-local}
+      CALENDAR_PUBLIC_URL: ${CALENDAR_PUBLIC_URL:-http://localhost:3000}
+      CALENDAR_WEBHOOK_URL: ${CALENDAR_WEBHOOK_URL:-}
+      CALENDAR_TIMEZONE: ${CALENDAR_TIMEZONE:-Asia/Kolkata}
+      BOOKING_SLOT_MINUTES: ${BOOKING_SLOT_MINUTES:-30}
+      BOOKING_WINDOW_DAYS: ${BOOKING_WINDOW_DAYS:-14}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-10}
+      AUTO_PROMOTION: ${AUTO_PROMOTION:-true}
+      DEFAULT_SEQUENCE_NAME: ${DEFAULT_SEQUENCE_NAME:-default-outreach}
+      DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-Asia/Kolkata}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost}
+      AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-alr_session}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+      AUTH_SESSION_TTL_DAYS: ${AUTH_SESSION_TTL_DAYS:-30}
+      AUTH_PASSWORD_RESET_TTL_MINUTES: ${AUTH_PASSWORD_RESET_TTL_MINUTES:-60}
+      AUTH_OAUTH_STATE_TTL_MINUTES: ${AUTH_OAUTH_STATE_TTL_MINUTES:-10}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost/api/v1/auth/google/callback}
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["sh", "-c", "npm run prisma:migrate:deploy --workspace @alr/api && npm run start:worker --workspace @alr/api"]
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-/api/v1}
+      API_PROXY_TARGET: ${API_PROXY_TARGET:-http://api:4000}
+      ADMIN_API_KEYS: ${ADMIN_API_KEYS:-}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      NODE_ENV: production
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+      - web
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  postgres_data:
+  redis_data:
