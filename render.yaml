@@ -143,7 +143,7 @@ services:
     plan: standard
     branch: main
     autoDeploy: true
-    startCommand: sh -c "npm run prisma:migrate:deploy --workspace @alr/api && npm run start:worker --workspace @alr/api"
+    dockerCommand: sh -c "npm run prisma:migrate:deploy --workspace @alr/api && npm run start:worker --workspace @alr/api"
     envVars:
       - key: NODE_ENV
         value: production
