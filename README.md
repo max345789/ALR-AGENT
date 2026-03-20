@@ -224,6 +224,7 @@ Everything needed for local development is already wired. These are the only tas
 - Set production domain and runtime environment variables when you deploy off localhost.
 - Set `ADMIN_API_KEYS` for secure server-side admin actions in production.
 - Set `LLM_PROVIDER` and the provider-specific key or base URL if you switch away from the current provider.
+- Keep billing in free-trial mode until you’re ready to enable a payment provider.
 
 ## Connecting Customer Platforms
 
@@ -276,7 +277,7 @@ Recommended launch flow:
 2. Create the Render Blueprint from `render.yaml`.
 3. Set the production secrets in Render:
    - OpenAI API key
-   - Stripe secret key and price IDs
+   - Stripe/PayU/Cashfree payment credentials when you enable billing
    - SMTP credentials
    - Google OAuth credentials
    - `ADMIN_API_KEYS`
@@ -290,7 +291,8 @@ For a saleable MVP, keep the first launch simple:
 - lead capture plus qualification
 - email follow-up
 - booking handoff
-- Stripe billing and plan gating
+- 14-day free trial
+- payment provider added after launch
 - no WhatsApp until after launch unless you already need it
 
 ## Connecting a Real LLM

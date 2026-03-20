@@ -251,6 +251,7 @@ export function DashboardClient() {
     source: lead.source,
     time: 'recently'
   }));
+  const trialMode = billing.status === 'trialing' || billing.plan === 'trial';
 
   return (
     <main className="app-shell dashboard-shell">
@@ -356,6 +357,11 @@ export function DashboardClient() {
               <p className="text-xs text-slate-500">
                 {billing.captureKeyConfigured && billing.captureKeyLast4 ? `Capture key configured ••••${billing.captureKeyLast4}` : 'Capture key not configured yet'}
               </p>
+              {trialMode && (
+                <p className="text-xs font-medium text-amber-700">
+                  Free-trial launch mode is active. Paid billing will be enabled after launch.
+                </p>
+              )}
             </div>
             <ActionButton variant="secondary" size="sm" onClick={() => window.location.assign('/billing')}>
               Manage billing

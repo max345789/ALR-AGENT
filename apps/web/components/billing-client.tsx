@@ -112,7 +112,13 @@ export function BillingClient() {
   }
 
   const currentPlan = billing?.plan ?? 'trial';
-  const billingActive = Boolean(billing && (billing.status === 'active' || (billing.status === 'trialing' && !billing.trialEndsAt ? true : billing.trialEndsAt ? new Date(billing.trialEndsAt) > new Date() : true)));
+  const billingActive = Boolean(
+    billing &&
+      (billing.status === 'active' ||
+        (billing.status === 'trialing' && (!billing.trialEndsAt ? true : new Date(billing.trialEndsAt) > new Date())))
+  );
+  const trialMode = billing?.isBillingConfigured === false;
+  const trialEndsLabel = billing?.trialEndsAt ? new Date(billing.trialEndsAt).toLocaleDateString() : '14 days';
 
   return (
     <main className="app-shell dashboard-shell">
@@ -121,17 +127,24 @@ export function BillingClient() {
           <Card className="gap-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-2">
-                <Badge tone={billingActive ? 'success' : 'warning'}>{billingActive ? 'Billing active' : 'Billing review'}</Badge>
+                <Badge tone={trialMode ? 'accent' : billingActive ? 'success' : 'warning'}>{trialMode ? 'Free trial' : billingActive ? 'Billing active' : 'Billing review'}</Badge>
                 <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Billing and workspace access</h1>
                 <p className="max-w-2xl text-sm leading-6 text-slate-600">
-                  Upgrade your workspace, rotate your capture key, and manage subscription access from one place.
+                  Launch on a 14-day free trial now. Paid billing stays disabled until you connect a provider later.
                 </p>
               </div>
               <div className="flex gap-2">
-                <ActionButton variant="secondary" size="sm" onClick={handlePortal} loading={portalLoading} disabled={!billing?.isBillingConfigured}>
-                  <ExternalLink className="size-4" />
-                  Open billing portal
-                </ActionButton>
+                {billing?.isBillingConfigured ? (
+                  <ActionButton variant="secondary" size="sm" onClick={handlePortal} loading={portalLoading}>
+                    <ExternalLink className="size-4" />
+                    Open billing portal
+                  </ActionButton>
+                ) : (
+                  <ActionButton variant="secondary" size="sm" disabled>
+                    <ExternalLink className="size-4" />
+                    Paid billing later
+                  </ActionButton>
+                )}
                 <ActionButton variant="ghost" size="sm" onClick={handleRotateKey} loading={rotatingKey}>
                   <RotateCcw className="size-4" />
                   Rotate key
@@ -153,6 +166,12 @@ export function BillingClient() {
                 hint="Used by external forms and webhooks"
               />
             </div>
+
+            {trialMode && (
+              <div className="rounded-[24px] border border-slate-200/80 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-700">
+                <strong className="font-semibold text-slate-900">Free-trial launch mode.</strong> Your workspace stays active for {trialEndsLabel}, and paid checkout will be enabled once you connect a billing provider later.
+              </div>
+            )}
 
             {message && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{message}</div>}
             {error && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
@@ -202,11 +221,11 @@ export function BillingClient() {
               </div>
               <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3">
                 <span>Trial ends</span>
-                <span className="font-medium text-slate-900">{billing?.trialEndsAt ? new Date(billing.trialEndsAt).toLocaleDateString() : '—'}</span>
+                <span className="font-medium text-slate-900">{trialEndsLabel}</span>
               </div>
               <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3">
                 <span>Billing provider</span>
-                <span className="font-medium text-slate-900">{billing?.isBillingConfigured ? 'Stripe' : 'Not configured'}</span>
+                <span className="font-medium text-slate-900">{billing?.isBillingConfigured ? 'Stripe' : 'Trial only'}</span>
               </div>
             </div>
           </Card>
@@ -241,10 +260,16 @@ export function BillingClient() {
                   variant={plan === 'enterprise' ? 'secondary' : 'primary'}
                   className="w-full justify-center"
                   loading={loading}
-                  disabled={!billing?.isBillingConfigured || active}
+                  disabled={trialMode || !billing?.isBillingConfigured || active}
                   onClick={() => handleCheckout(plan)}
                 >
-                  {active ? 'Already active' : plan === 'enterprise' ? 'Contact sales' : `Upgrade to ${copy.name}`}
+                  {active
+                    ? 'Already active'
+                    : trialMode
+                      ? 'Available after launch'
+                      : plan === 'enterprise'
+                        ? 'Contact sales'
+                        : `Upgrade to ${copy.name}`}
                   <Sparkles className="size-4" />
                 </ActionButton>
               </Card>
